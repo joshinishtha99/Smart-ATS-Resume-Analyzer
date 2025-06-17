@@ -1,0 +1,61 @@
+body, .stApp {
+    background-color: #000000 !important;
+    color: white !important;
+}
+
+
+.stButton > button {
+    background-color: #04a3e8;
+    color: #ffffff !important;  
+    font-weight: bold;
+    padding: 0.5em 1.2em;
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stButton > button:hover {
+    background-color: #0283ba;
+    color: #ffffff !important;
+}
+
+.signout-button button {
+    width: 70px !important;
+    height: 40px;
+    background-color: #ff4b4b;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.top-right-signout {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    z-index: 999;
+}
+
+.top-right-signout button {
+    width: 120px;
+    height: 36px;
+    background-color: #ff4b4b;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Make labels and text clearly visible */
+label, .stTextInput label, .stTextArea label {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Make placeholder text visible */
+input::placeholder, textarea::placeholder {
+    color: #cccccc !important;
+    opacity: 1 !important;
+}
