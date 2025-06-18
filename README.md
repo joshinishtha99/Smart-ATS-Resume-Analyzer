@@ -1,4 +1,4 @@
-Smart ATS Resume Analyzer is an AI-powered tool built using **Streamlit**, **Gemini API**, and **Firebase**. It helps job seekers evaluate how well their resumes match a given job description, highlights missing keywords, and offers intelligent feedback — just like an ATS (Applicant Tracking System).
+Smart ATS Resume Analyzer is an AI-powered tool built using **Streamlit**, **Gemini API**, and **Firebase**. It helps job seekers evaluate how well their resumes match a given job description, highlights missing keywords, and offers intelligent feedback, just like an ATS (Applicant Tracking System).
 
 ## Features
 
