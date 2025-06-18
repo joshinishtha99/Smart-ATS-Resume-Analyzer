@@ -73,6 +73,8 @@ with st.expander("📁 View Past Resume Scores"):
                 data = item.val()
                 st.markdown(f"**{data['filename']}** - Score: {data['score']}%")
                 st.caption("Missing Keywords: " + ", ".join(data["missing"][:5]))
+                if "file_url" in data:
+                    st.markdown(f"[📄 View Resume]({data['file_url']})", unsafe_allow_html=True)
         else:
             st.info("No past resumes found.")
     except Exception as e:
@@ -115,6 +117,10 @@ def score_resume(jd_text, resume_text):
 
 
 with st.sidebar:
+    #st.markdown('<p class="sidebar-label">Ask me anything about resumes...</p>', unsafe_allow_html=True)
+    #st.text_input(" ", placeholder="Ask me anything about resumes...", key="chat_input", label_visibility="collapsed")
+
+
     st.title("💬 Resume Chatbot")
     user_question = st.text_input("Ask me anything about resumes...")
 
@@ -137,53 +143,64 @@ with tab1:
 jd = st.text_area(label="", height=200)
 
 st.markdown('<p style="color: #cccccc; font-size: 16px; font-weight: 600;">Upload Your Resumes (2–3)</p>', unsafe_allow_html=True)
-uploaded_files = st.file_uploader(label="", type="pdf", accept_multiple_files=True)
-
+uploaded_files = st.file_uploader(
+    "Upload 1 to 3 resumes", 
+    type=["pdf"], 
+    accept_multiple_files=True, 
+    help="You can upload one or compare up to three resumes"
+)
 run_check = st.button("Run ATS Check")
 
 if run_check:
-        if uploaded_files and jd.strip() != "" and len(uploaded_files) >= 2:
-            results = []
-            for file in uploaded_files:
-                resume_text = input_pdf_text(file)
-                score, missing = score_resume(jd, resume_text)
-                results.append({
-                    "filename": file.name,
-                    "score": score,
-                    "missing": missing,
-                    "text": resume_text
-                })
+    if uploaded_files and 1 <= len(uploaded_files) <= 3 and jd.strip() != "":
+        results = []
 
-            st.success("✅ Analysis Complete")
-            st.subheader("📊 Resume Comparison Results")
+        for file in uploaded_files:
+            resume_text = input_pdf_text(file)
+            score, missing = score_resume(jd, resume_text)
+            results.append({
+                "filename": file.name,
+                "score": score,
+                "missing": missing,
+                "text": resume_text,
+            })
 
-            cols = st.columns(len(results))
-            for col, result in zip(cols, results):
-                with col:
-                    st.markdown(f"**📄 {result['filename']}**")
-                    st.metric("Match Score", f"{result['score']:.2f}%")
-                    st.caption("🕳️ Missing Keywords")
-                    st.write(", ".join(result["missing"][:8]) if result["missing"] else "None")
+        st.success("✅ Analysis Complete")
+        st.subheader("📊 Resume Comparison Results")
 
-            best_resume = max(results, key=lambda x: x["score"])
-            st.success(f"🎯 Best Resume: **{best_resume['filename']}** with **{best_resume['score']:.2f}%** match")
-            user_id = st.session_state.email.replace(".", "_")  # replace . for firebase key compatibility
+        cols = st.columns(len(results))
+        for col, result in zip(cols, results):
+            with col:
+                st.markdown(f"**📄 {result['filename']}**")
+                st.metric("Match Score", f"{result['score']:.2f}%")
+                st.caption("🕳️ Missing Keywords")
+                st.write(", ".join(result["missing"][:8]) if result["missing"] else "None")
 
-            for result in results:
-                db.child("resumes").child(user_id).push({
+        best_resume = max(results, key=lambda x: x["score"])
+        st.success(f"🎯 Best Resume: **{best_resume['filename']}** with **{best_resume['score']:.2f}%** match")
+
+        user_id = st.session_state.email.replace(".", "_")
+
+        # Upload all resume metadata + files
+        for result in results:
+           
+
+            db.child("resumes").child(user_id).push({
                 "filename": result["filename"],
                 "score": result["score"],
-                "missing": result["missing"]
-    })
+                "missing": result["missing"],
+                "file_url": file_url
+            })
 
-            # Save for Gemini Feedback
-            st.session_state.jd = jd
-            st.session_state.resume_text = best_resume['text']
-            st.session_state.score = best_resume['score']
-            st.session_state.missing = best_resume['missing']
+        # Save best resume info for Gemini Feedback
+        st.session_state.jd = jd
+        st.session_state.resume_text = best_resume["text"]
+        st.session_state.score = best_resume["score"]
+        st.session_state.missing = best_resume["missing"]
+
 
             # Prepare prompt for Gemini
-            prompt = f"""
+        prompt = f"""
 You are an advanced Applicant Tracking System (ATS) designed to evaluate resumes based on job descriptions.
 
 Your task is to analyze the resume provided below in the context of the job description.
@@ -205,26 +222,27 @@ Missing Keywords:
 
 Provide your suggestions in a professional and detailed format.
 """
-            response = get_gemini_response(prompt)
+        response = get_gemini_response(prompt)
 
-            st.session_state.response = response
+        st.session_state.response = response
 
             # Display Gemini Feedback Summary
-            st.success("✅ Gemini Feedback Generated")
-            st.metric("🔍 ATS Match Score", f"{best_resume['score']:.2f}%")
+        st.success("✅ Gemini Feedback Generated")
+        st.metric("🔍 ATS Match Score", f"{best_resume['score']:.2f}%")
 
-            fig = go.Figure(go.Indicator(
+        fig = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=best_resume['score'],
                 title={"text": "Resume Match %"},
                 gauge={"axis": {"range": [0, 100]}}
             ))
-            st.plotly_chart(fig)
+        st.plotly_chart(fig)
 
-            st.subheader("🕳️ Missing Keywords")
-            st.warning(", ".join(best_resume['missing'][:15]) if best_resume['missing'] else "None! Great match.")
-        else:
-            st.error("Please upload at least 2 resumes and enter the job description.")
+        st.subheader("🕳️ Missing Keywords")
+        st.warning(", ".join(best_resume['missing'][:15]) if best_resume['missing'] else "None! Great match.")
+        
+    else:
+        st.error("Please upload at least 2 resumes and enter the job description.")
 
 with tab2:
     st.subheader("💬 Gemini AI Feedback")

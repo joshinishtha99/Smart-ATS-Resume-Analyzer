@@ -50,7 +50,7 @@ body, .stApp {
 
 /* Make labels and text clearly visible */
 label, .stTextInput label, .stTextArea label {
-    color: white !important;
+    color: rgb(14, 1, 1) !important;
     font-weight: 600;
 }
 
@@ -58,4 +58,9 @@ label, .stTextInput label, .stTextArea label {
 input::placeholder, textarea::placeholder {
     color: #cccccc !important;
     opacity: 1 !important;
+}
+
+.sidebar-label {
+    color: black !important;
+    font-weight: 500;
 }
